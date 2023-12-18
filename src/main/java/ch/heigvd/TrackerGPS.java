@@ -43,7 +43,7 @@ public class TrackerGPS implements Callable<Integer> {
     )
     protected int frequency;
 
-    protected SimpleDateFormat dateFormat;
+    protected SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
     @CommandLine.Option(
             names = {"-i", "--interface"},

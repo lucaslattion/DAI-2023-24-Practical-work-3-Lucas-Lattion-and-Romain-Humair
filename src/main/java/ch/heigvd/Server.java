@@ -37,6 +37,24 @@ public class Server extends AbstractServer {
     )
     private String interfaceName;
 
+    @CommandLine.Option(
+            names = {"-pm", "--port_multicast"},
+            description = "port for multicast",
+            scope = CommandLine.ScopeType.INHERIT,
+            required = true
+    )
+    private Integer multicast_port;
+
+    @CommandLine.Option(
+            names = {"-pu", "--port_unicast"},
+            description = "port for unicast",
+            scope = CommandLine.ScopeType.INHERIT,
+            required = true
+    )
+    private Integer unicast_port;
+
+
+
 
     private static final Map<String, TreeMap<Long, TrackerData>> trackerDataMap = new TreeMap<>();
 
@@ -62,16 +80,16 @@ public class Server extends AbstractServer {
     public Integer multicast_receiver() {
         ExecutorService executor = null;
 
-        try (MulticastSocket socket = new MulticastSocket(parent.getPort())) {
+        try (MulticastSocket socket = new MulticastSocket(multicast_port)) {
 
             // This is new - the executor service has a pool of threads
             executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
 
-            String myself = InetAddress.getLocalHost().getHostAddress() + ":" + parent.getPort();
+            String myself = InetAddress.getLocalHost().getHostAddress() + ":" + multicast_port;
             System.out.println("Multicast receiver started (" + myself + ")");
 
             InetAddress multicastAddress = InetAddress.getByName(host);
-            InetSocketAddress group = new InetSocketAddress(multicastAddress, parent.getPort());
+            InetSocketAddress group = new InetSocketAddress(multicastAddress, multicast_port);
             NetworkInterface networkInterface = NetworkInterface.getByName(interfaceName);
             socket.joinGroup(group, networkInterface);
 
@@ -146,28 +164,61 @@ public class Server extends AbstractServer {
 
     public Integer unicast_receiver() {
         // ...
-        System.out.println("Unicast receiver started");
+        //System.out.println("Unicast receiver started");
 
-        return 0;
+        ExecutorService executor = null;
+
+        //try (DatagramSocket socket = new DatagramSocket(parent.getPort())) {
+        try (DatagramSocket socket = new DatagramSocket(unicast_port)) {
+            // This is new - the executor service has a pool of threads
+            executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
+
+            String myself = InetAddress.getLocalHost().getHostAddress() + ":" + unicast_port;
+            System.out.println("Unicast receiver started (" + myself + ")");
+
+            byte[] receiveData = new byte[1024];
+
+            while (true) {
+                DatagramPacket packet = new DatagramPacket(
+                        receiveData,
+                        receiveData.length
+                );
+
+                socket.receive(packet);
+
+                // This is new - we submit a new task to the executor service
+                executor.submit(new UnicastHandler(packet, myself, socket));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 1;
+        }
+
     }
 
     static class UnicastHandler implements Runnable {
         private final DatagramPacket packet;
         private final String myself;
 
-        public UnicastHandler(DatagramPacket packet, String myself) {
+        private final DatagramSocket socket;
+
+        public UnicastHandler(DatagramPacket packet, String myself, DatagramSocket socket) {
             this.packet = packet;
             this.myself = myself;
+            this.socket = socket;
         }
 
         @Override
         public void run() {
+
             String message = new String(
                     packet.getData(),
                     packet.getOffset(),
                     packet.getLength(),
                     StandardCharsets.UTF_8
             );
+            InetAddress clientAddress = packet.getAddress();
+            int clientPort = packet.getPort();
 
             if (message.startsWith("REQUEST:")) {
                 // Traitement de la demande du client
@@ -227,7 +278,7 @@ public class Server extends AbstractServer {
 
     private static void sendResponse(String response, InetAddress clientAddress, int clientPort, DatagramSocket socket) {
         try {
-            byte[] responseData = response.getBytes();
+            byte[] responseData = response.getBytes(StandardCharsets.UTF_8);
             DatagramPacket responsePacket = new DatagramPacket(responseData, responseData.length,
                     clientAddress, clientPort);
             socket.send(responsePacket);

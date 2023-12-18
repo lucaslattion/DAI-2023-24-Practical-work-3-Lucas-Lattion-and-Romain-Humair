@@ -29,10 +29,15 @@
           </option>
           <option name="goals">
             <list>
-              <option value="dependency:resolve" />
-              <option value="clean" />
-              <option value="compile" />
-              <option value="package" />
+              <option value="server" />
+              <option value="-i" />
+              <option value="Realtek USB GbE Family Controller" />
+              <option value="-H" />
+              <option value="239.1.1.1" />
+              <option value="-pm" />
+              <option value="12345" />
+              <option value="-pu" />
+              <option value="23456" />
             </list>
           </option>
           <option name="pomFileName" />

@@ -45,7 +45,7 @@ public class Client implements Callable<Integer> {
     )
     protected int frequency;
 
-    protected SimpleDateFormat dateFormat;
+    protected SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
     @Override
     public Integer call() {
         try (DatagramSocket socket = new DatagramSocket()) {
