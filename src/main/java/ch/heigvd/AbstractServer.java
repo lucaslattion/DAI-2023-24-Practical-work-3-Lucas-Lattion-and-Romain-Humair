@@ -19,19 +19,4 @@ public abstract class AbstractServer implements Callable<Integer> {
     )
     protected String host;
 
-    @CommandLine.Option(
-            names = {"-d", "--delay"},
-            description = "Delay before sending the message (in milliseconds) (default: 0).",
-            defaultValue = "0"
-    )
-    protected int delay;
-
-    @CommandLine.Option(
-            names = {"-f", "--frequency"},
-            description = "Frequency of sending the message (in milliseconds) (default: 10000).",
-            defaultValue = "10000"
-    )
-    protected int frequency;
-
-
 }
