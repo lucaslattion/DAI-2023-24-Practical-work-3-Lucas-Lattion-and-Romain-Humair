@@ -93,7 +93,7 @@ public class Server extends AbstractServer {
             NetworkInterface networkInterface = NetworkInterface.getByName(interfaceName);
             socket.joinGroup(group, networkInterface);
 
-            byte[] receiveData = new byte[1024];
+            byte[] receiveData = new byte[2048];
 
             while (true) {
                 DatagramPacket packet = new DatagramPacket(
@@ -132,7 +132,7 @@ public class Server extends AbstractServer {
             );
 
             if (message.startsWith("PROVIDE:")) {
-                String[] parts = message.substring(8).split(",");
+                String[] parts = message.substring(8).split(":");
                 if (parts.length == 5) {
                     String trackerId = parts[0];
                     long timestamp = Long.parseLong(parts[1]);
@@ -149,16 +149,14 @@ public class Server extends AbstractServer {
 
             System.out.println("Multicast receiver (" + myself + ") received message: " + message);
 
-            System.out.println("Going to sleep for 10 seconds...");
-
+            //System.out.println("Going to sleep for 10 seconds...");
             // Sleep for a while to simulate a long-running task
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            System.out.println("End of sleep");
+            //try {
+            //    Thread.sleep(10000);
+            //} catch (InterruptedException e) {
+            //    e.printStackTrace();
+            //}
+            //System.out.println("End of sleep");
         }
     }
 
