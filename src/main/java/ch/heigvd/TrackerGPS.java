@@ -57,7 +57,7 @@ public class TrackerGPS implements Callable<Integer> {
     public Integer call() {
         try (MulticastSocket socket = new MulticastSocket(parent.getPort())) {
             String myself = InetAddress.getLocalHost().getHostAddress() + ":" + parent.getPort();
-            System.out.println("Multicast emitter started (" + myself + ")");
+            System.out.println("Tracker GPS Multicast emitter started (" + myself + ")");
 
             InetAddress multicastAddress = InetAddress.getByName(host);
             InetSocketAddress group = new InetSocketAddress(multicastAddress, parent.getPort());
