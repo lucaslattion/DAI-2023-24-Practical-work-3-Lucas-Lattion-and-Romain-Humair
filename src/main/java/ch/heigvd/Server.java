@@ -38,18 +38,18 @@ public class Server extends AbstractServer {
 
     @CommandLine.Option(
             names = {"-pm", "--port_multicast"},
-            description = "port for multicast (default : 12345)",
+            description = "port for multicast (default : 5050)",
             scope = CommandLine.ScopeType.INHERIT,
-            defaultValue = "12345",
+            defaultValue = "5050",
             required = true
     )
     private Integer multicast_port;
 
     @CommandLine.Option(
             names = {"-pu", "--port_unicast"},
-            description = "port for unicast (default : 23456)",
+            description = "port for unicast (default : 5051)",
             scope = CommandLine.ScopeType.INHERIT,
-            defaultValue = "23456",
+            defaultValue = "5051",
             required = true
     )
     private Integer unicast_port;
@@ -238,11 +238,11 @@ public class Server extends AbstractServer {
                             sendResponse(response, clientAddress, clientPort, socket);
                         } else {
                             // ID not found, error message
-                            String errorResponse = "Error : Tracker with ID '" + trackerId + "' not found.";
+                            String errorResponse = "Error 1: Tracker with ID '" + trackerId + "' not found.";
                             sendResponse(errorResponse, clientAddress, clientPort, socket);
                         }
                     } else {
-                        String errorResponse = "Error : Invalid format";
+                        String errorResponse = "Error 3: Invalid format";
                         sendResponse(errorResponse, clientAddress, clientPort, socket);
                     }
                 } else if (message.startsWith("GET-HISTORY:")) {
@@ -257,25 +257,35 @@ public class Server extends AbstractServer {
                             sendResponse(response, clientAddress, clientPort, socket);
                         } else {
                             // ID not found, error message
-                            String errorResponse = "Error : Tracker with ID '" + trackerId + "' not found.";
+                            String errorResponse = "Error 1: Tracker with ID '" + trackerId + "' not found.";
                             sendResponse(errorResponse, clientAddress, clientPort, socket);
                         }
                     } else {
-                        String errorResponse = "Error : Invalid format";
+                        String errorResponse = "Error 3: Invalid format";
                         sendResponse(errorResponse, clientAddress, clientPort, socket);
                     }
                 } else if (message.startsWith("GET-ALL:")) {
                     StringBuilder response = new StringBuilder("ALL:\n");
-                    for (Map.Entry<String, TreeMap<Long, TrackerData>> entry : trackerDataMap.entrySet()) {
-                        String currentTrackerId = entry.getKey();
-                        TrackerData latestTrackerData = entry.getValue().lastEntry().getValue();
-                        response.append(currentTrackerId).append(": ").append(latestTrackerData).append("\n");
+                    if (trackerDataMap.isEmpty()) {
+                        response.append("Error 2: empty, no tracker data, start a tracker-gps.\n");
+                    } else {
+                        //The Map trackerDataMap has data
+                        for (Map.Entry<String, TreeMap<Long, TrackerData>> entry : trackerDataMap.entrySet()) {
+                            String currentTrackerId = entry.getKey();
+                            TrackerData latestTrackerData = entry.getValue().lastEntry().getValue();
+                            response.append(currentTrackerId).append(": ").append(latestTrackerData).append("\n");
+                        }
                     }
                     sendResponse(response.toString(), clientAddress, clientPort, socket);
                 } else if (message.startsWith("GET-IDS:")) {
                     StringBuilder response = new StringBuilder("IDS:\n");
-                    for (String storedTrackerId : trackerDataMap.keySet()) {
-                        response.append(storedTrackerId).append("\n");
+                    if (trackerDataMap.isEmpty()) {
+                        response.append("Error 2: empty, no tracker data, start a tracker-gps.\n");
+                    } else {
+                        //The Map trackerDataMap has data
+                        for (String storedTrackerId : trackerDataMap.keySet()) {
+                            response.append(storedTrackerId).append("\n");
+                        }
                     }
                     sendResponse(response.toString(), clientAddress, clientPort, socket);
                 }
