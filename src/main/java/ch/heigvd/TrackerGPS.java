@@ -8,10 +8,13 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import java.util.Random;
 
 @Command(
         name = "tracker-gps",
@@ -43,8 +46,6 @@ public class TrackerGPS implements Callable<Integer> {
     )
     protected int frequency;
 
-    protected SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-
     @CommandLine.Option(
             names = {"-i", "--interface"},
             description = "Interface to use.",
@@ -53,13 +54,29 @@ public class TrackerGPS implements Callable<Integer> {
     )
     private String interfaceName;
 
+    @CommandLine.Option(
+            names = {"-I", "--ID"},
+            description = "Tracker ID, should not be 0 (default : random IMEI value) ",
+            defaultValue = "0"
+    )
+    private long id;
+
+
+    protected SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
     @Override
     public Integer call() {
+        if (id == 0){
+            Random random = new Random();
+            id = generateRandomIMEI(random);
+        }
+
         try (MulticastSocket socket = new MulticastSocket(parent.getPort())) {
             String myself = InetAddress.getLocalHost().getHostAddress() + ":" + parent.getPort();
-            System.out.println("Tracker GPS Multicast emitter started (" + myself + ")");
+            System.out.println("Tracker GPS Multicast emitter started (" + myself + ") with id " + id);
 
             InetAddress multicastAddress = InetAddress.getByName(host);
+            System.out.println("multicast address is " + multicastAddress);
             InetSocketAddress group = new InetSocketAddress(multicastAddress, parent.getPort());
             NetworkInterface networkInterface = NetworkInterface.getByName(interfaceName);
             socket.joinGroup(group, networkInterface);
@@ -67,8 +84,12 @@ public class TrackerGPS implements Callable<Integer> {
             ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
             scheduler.scheduleAtFixedRate(() -> {
                 try {
-                    String timestamp = dateFormat.format(new Date());
-                    String message = "Hello, from multicast emitter! (" + myself + " at " + timestamp + ")";
+                    //String timestamp = dateFormat.format(new Date());
+                    String position = generateRandomPosition();
+                    String batteryLevel = generateRandomBatteryLevel();
+                    String timestamp = String.valueOf(System.currentTimeMillis());
+
+                    String message = "PROVIDE:" + id + "," + timestamp + "," + position + "," + batteryLevel;
 
                     System.out.println("Multicasting '" + message + "' to " + host + ":" + parent.getPort() + " on interface " + interfaceName);
 
@@ -79,6 +100,8 @@ public class TrackerGPS implements Callable<Integer> {
                             payload.length,
                             group
                     );
+
+                    System.out.println("Payload size : " + payload.length);
 
                     socket.send(datagram);
                 } catch (IOException e) {
@@ -96,5 +119,33 @@ public class TrackerGPS implements Callable<Integer> {
         }
 
         return 0;
+    }
+
+    private static long generateRandomIMEI(Random random) {
+        StringBuilder imeiBuilder = new StringBuilder();
+
+        // The first digit should not be zero, so generate a number between 1 and 9
+        imeiBuilder.append(1 + random.nextInt(9));
+
+        // Generating the next 14 digits
+        for (int i = 0; i < 14; i++) {
+            imeiBuilder.append(random.nextInt(10));
+        }
+
+        // Converting the string to long
+        return Long.parseLong(imeiBuilder.toString());
+    }
+
+    private static String generateRandomPosition() {
+        Random rand = new Random();
+        double latitude = 40.0 + (rand.nextDouble() * 20.0);
+        double longitude = -120.0 + (rand.nextDouble() * 40.0);
+        return String.format(Locale.ENGLISH, "%.4f", latitude) + "," + String.format(Locale.ENGLISH, "%.4f", longitude);
+    }
+
+    private static String generateRandomBatteryLevel() {
+        Random rand = new Random();
+        int batteryLevel = rand.nextInt(101); // Niveau de batterie entre 0% et 100%
+        return String.valueOf(batteryLevel);
     }
 }
