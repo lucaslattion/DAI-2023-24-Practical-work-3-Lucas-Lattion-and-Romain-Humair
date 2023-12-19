@@ -38,16 +38,18 @@ public class Server extends AbstractServer {
 
     @CommandLine.Option(
             names = {"-pm", "--port_multicast"},
-            description = "port for multicast",
+            description = "port for multicast (default : 12345)",
             scope = CommandLine.ScopeType.INHERIT,
+            defaultValue = "12345",
             required = true
     )
     private Integer multicast_port;
 
     @CommandLine.Option(
             names = {"-pu", "--port_unicast"},
-            description = "port for unicast",
+            description = "port for unicast (default : 23456)",
             scope = CommandLine.ScopeType.INHERIT,
+            defaultValue = "23456",
             required = true
     )
     private Integer unicast_port;

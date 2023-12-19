@@ -71,13 +71,12 @@ This protocol outlines the communication for a GPS tracking system using UDP. It
 - GPS-emitter --> Server <--> Client
 
 ### Section 2 - Transport Protocol
-The system uses the User Datagram Protocol (UDP) due to its low latency and efficiency. The following UDP ports are designated for communication:
-- **Tracker to Server Port:** 5050 (used by GPS trackers to send data to the server)
-- **Client to Server Port:** 5051 (used by clients to send requests to the server)
-- **Server to Client Port:** 5052 (used by the server to send data to clients)
+The system uses the User Datagram Protocol (UDP) due to its low latency and efficiency. The following UDP ports are designated by default for communication:
+- **Tracker to Server Port:** 12345 (used by GPS trackers to send data to the server)
+- **Client to Server Port:** 23456 (used by clients to send requests to the server and by server to reply)
 
-Server listen on ports: 5050 and 5051.
-Client listen on port: 5052.
+ports be changed. use the cmd `--help` for more information
+
 
 
 ### Section 3 - Messages
@@ -87,37 +86,79 @@ The tracker send message
    - **Format:** `PROVIDE:ID,timestamp,latitude,longitude,battery_level`
    - **Example:** `PROVIDE:1234,20231218T123000Z,37.7749,-122.4194,85`
 
-#### Server to Client
-- **LIST Message:**
-   - **Format:** `LIST:{ID,timestamp,latitude,longitude,battery_level},...`
-   - **Example:** `LIST:{1234,20231218T123000Z,37.7749,-122.4194,85},{5678,20231218T123015Z,40.7128,-74.0060,78},...`
 
 #### Client to Server
-- **GET-IDS Message:**
-   - **Format:** `GET-IDS`
-   - **Example:** `GET-IDS`
-- **GET-LAST Message:**
-   - **Format:** `GET-LAST <ID>`
-   - **Example:** `GET-LAST 1234`
-- **GET-HISTORY Message:**
-   - **Format:** `GET-HISTORY <ID>`
-   - **Example:** `GET-HISTORY 1234`
+- **GET-IDS Message:** list of all trackers ID stored on the server
+    - **Format:** `GET-IDS:`
+
+    - **REQUEST** 
+    ```
+    GET-IDS:
+    ```
+    - **RESPONSE** 
+    ```
+   IDS:
+    245160350818314
+    597968797216796
+    673352503620987
+    945983442423128
+    ```
+- **GET-LAST Message:** last data from a specific tracker (ID)
+    - **Format:** `GET-LAST: <ID>`
+    - **REQUEST** 
+    ```
+    GET-LAST:673352503620987 
+    ```
+    - **RESPONSE** 
+    ```
+   TrackerData{trackerId='673352503620987', timestamp=1702957396983, latitude=50.5579, longitude=-88.518, batteryLevel=17}
+    ```
+- **GET-HISTORY Message:** all data from a specific tracker (ID)
+    - **Format:** `GET-HISTORY: <ID>`
+    - **REQUEST** 
+    ```
+    GET-HISTORY:673352503620987
+    ```
+    - **RESPONSE** 
+    ```
+   HISTORY:
+    TrackerData{trackerId='673352503620987', timestamp=1702957301992, latitude=52.6475, longitude=-90.7085, batteryLevel=23}
+    TrackerData{trackerId='673352503620987', timestamp=1702957306974, latitude=44.985, longitude=-111.787, batteryLevel=43}
+    TrackerData{trackerId='673352503620987', timestamp=1702957311974, latitude=55.3323, longitude=-90.7589, batteryLevel=14}
+    TrackerData{trackerId='673352503620987', timestamp=1702957316977, latitude=49.6168, longitude=-100.9021, batteryLevel=44}
+    TrackerData{trackerId='673352503620987', timestamp=1702957321979, latitude=43.1958, longitude=-102.6128, batteryLevel=30}
+    TrackerData{trackerId='673352503620987', timestamp=1702957326976, latitude=53.781, longitude=-80.1177, batteryLevel=64}
+    TrackerData{trackerId='673352503620987', timestamp=1702957331985, latitude=55.2012, longitude=-95.1729, batteryLevel=58}
+    TrackerData{trackerId='673352503620987', timestamp=1702957336978, latitude=56.5947, longitude=-93.2001, batteryLevel=94}
+    ```
+
+- **GET-ALL Message:** last position of all trackers
+    - **Format:** `GET-ALL:`
+    - **REQUEST** 
+    ```
+    GET-ALL: 
+    ```
+    - **RESPONSE** 
+    ```
+   ALL:
+    245160350818314: TrackerData{trackerId='245160350818314', timestamp=1702957300192, latitude=43.807, longitude=-82.2927, batteryLevel=26}
+    597968797216796: TrackerData{trackerId='597968797216796', timestamp=1702957298460, latitude=51.1479, longitude=-107.5987, batteryLevel=72}
+    673352503620987: TrackerData{trackerId='673352503620987', timestamp=1702957501974, latitude=59.7718, longitude=-116.4574, batteryLevel=25}
+    945983442423128: TrackerData{trackerId='945983442423128', timestamp=1702957295154, latitude=44.0893, longitude=-106.4811, batteryLevel=61}
+    ```
+
 
 ### Section 4 - Examples
 #### Example 1: Tracker Updating Server
 - **Scenario:** A GPS tracker sends its current location and battery status to the server.
 - **Message:** `PROVIDE:1234,20231218T123000Z,37.7749,-122.4194,85`
-- **UDP Port:** 5050
+- **UDP Port:** 12345
 
 #### Example 2: Client Requesting Last Known Position
 - **Scenario:** A client requests the last known position of tracker ID 1234.
-- **Message:** `GET-LAST 1234`
-- **UDP Port:** 5051
+- **Message:** `GET-LAST:1234`
+- **UDP Port:** 23456
 
-#### Example 3: Server Sending List of Trackers to Client
-- **Scenario:** The server sends a list of current tracker data to a client.
-- **Message:** `LIST:{1234,20231218T123000Z,37.7749,-122.4194,85},{5678,20231218T123015Z,40.7128,-74.0060,78},...`
-- **UDP Port:** 5052
 
 ## Section 5 - Protocol Diagrams
 
