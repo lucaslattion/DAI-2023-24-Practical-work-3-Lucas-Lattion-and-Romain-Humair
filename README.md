@@ -100,7 +100,7 @@ Choose an option:
 ```
 
 
-## Help
+### Help
 cmd
 ```
 java -jar java-udp-programming-1.0-SNAPSHOT.jar -h
@@ -119,25 +119,41 @@ Commands:
   client                   Start an UDP GPS tracker unicast emitter client
 ```
 
+## Docker and docker compose
 
-## Examples
+### How to build the image
 
-Server : ```java -jar java-udp-programming-1.0-SNAPSHOT.jar -s```
+powershell
 ```
 
+docker build -t dai-java-udp-tracker-gps .
 ```
 
-Client : ```java -jar java-udp-programming-1.0-SNAPSHOT.jar -c```
+### How to build and publish the image
+
+powershell
+```
+# Build the image with the dai-java-udp-tracker-gps tag
+docker build -t dai-java-udp-tracker-gps .
+
+# Start the image with the dai-java-udp-tracker-gps tag
+docker run dai-java-udp-tracker-gps
+
+# Tag the image with the correct format to be published
+docker tag dai-java-udp-tracker-gps ghcr.io/lucaslattion/dai-java-udp-tracker-gps
+
+# verify the tag by displaying all the images
+docker images
+
+# Publish the image on GitHub Container Registry
+docker push ghcr.io/lucaslattion/dai-java-udp-tracker-gps
+
+# Start the image with the ghcr.io/lucaslattion/dai-java-udp-tracker-gps tag
+docker run ghcr.io/lucaslattion/dai-java-udp-tracker-gps
 ```
 
-```
 
-
-
-
-
-
-
+## The protocol
 
 ### Section 1 - Overview
 This protocol outlines the communication for a GPS tracking system using UDP. It involves the exchange of GPS data between trackers, a server, and clients. The system is designed to efficiently transmit real-time and historical location data, including timestamps, latitude, longitude, and battery levels.

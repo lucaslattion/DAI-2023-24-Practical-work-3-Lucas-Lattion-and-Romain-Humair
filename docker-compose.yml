@@ -1,0 +1,35 @@
+
+services:
+
+  tracker-gps-1:
+    image: ghcr.io/lucaslattion/dai-java-udp-tracker-gps
+    command:
+      - tracker-gps
+      - --host=239.1.1.1
+      - --port=5050
+      - --delay=0
+      - --frequency=3000
+      - --interface=eth0
+
+  server-1:
+    image: ghcr.io/lucaslattion/dai-java-udp-tracker-gps
+    command:
+      - server
+      - --host=239.1.1.1
+      - --port=5050
+      - --interface=eth0
+      - --port_multicast=5050
+      - --port_unicast=5051
+
+
+  client-1:
+    image: ghcr.io/lucaslattion/dai-java-udp-tracker-gps
+    command:
+      - client
+      - --host=localhost
+      - --port=5051
+
+  list-network-interfaces:
+    image: ghcr.io/lucaslattion/dai-java-udp-tracker-gps
+    command:
+      - list-network-interfaces

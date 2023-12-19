@@ -157,16 +157,6 @@ public class Server extends AbstractServer {
                 e.printStackTrace();
             }
 
-
-
-            //System.out.println("Going to sleep for 10 seconds...");
-            // Sleep for a while to simulate a long-running task
-            //try {
-            //    Thread.sleep(10000);
-            //} catch (InterruptedException e) {
-            //    e.printStackTrace();
-            //}
-            //System.out.println("End of sleep");
         }
     }
 
@@ -292,15 +282,6 @@ public class Server extends AbstractServer {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
-            //System.out.println("Going to sleep for 10 seconds...");
-            // Sleep for a while to simulate a long-running task
-            //try {
-            //    Thread.sleep(10000);
-            //} catch (InterruptedException e) {
-            //    e.printStackTrace();
-            //}
-            //System.out.println("End of sleep");
         }
     }
 
