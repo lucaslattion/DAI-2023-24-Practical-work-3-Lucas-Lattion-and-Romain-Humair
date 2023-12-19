@@ -6,7 +6,6 @@ import picocli.CommandLine.Command;
 
 
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -16,7 +15,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import java.net.*;
-import java.nio.charset.StandardCharsets;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -145,7 +143,7 @@ public class Server extends AbstractServer {
                             double latitude = Double.parseDouble(parts[2]);
                             double longitude = Double.parseDouble(parts[3]);
                             int batteryLevel = Integer.parseInt(parts[4]);
-                            
+
                             trackerDataMap.computeIfAbsent(trackerId, k -> new TreeMap<>())
                                     .put(timestamp, new TrackerData(trackerId, timestamp, latitude, longitude, batteryLevel));
 
@@ -172,11 +170,9 @@ public class Server extends AbstractServer {
 
     public Integer unicast_receiver() {
         // ...
-        //System.out.println("Unicast receiver started");
 
         ExecutorService executor = null;
 
-        //try (DatagramSocket socket = new DatagramSocket(parent.getPort())) {
         try (DatagramSocket socket = new DatagramSocket(unicast_port)) {
             // This is new - the executor service has a pool of threads
             executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS);
@@ -201,13 +197,11 @@ public class Server extends AbstractServer {
             e.printStackTrace();
             return 1;
         }
-
     }
 
     static class UnicastHandler implements Runnable {
         private final DatagramPacket packet;
         private final String myself;
-
         private final DatagramSocket socket;
 
         public UnicastHandler(DatagramPacket packet, String myself, DatagramSocket socket) {
@@ -230,63 +224,90 @@ public class Server extends AbstractServer {
 
                 System.out.println("Unicast receiver (" + myself + ") received message: " + message);
 
-                if (message.startsWith("REQUEST:")) {
-                    // Traitement de la demande du client
+                if (message.startsWith("GET-LAST:")) {
                     String[] parts = message.split(":");
-                    String requestType = parts[1];
-                    String trackerId = parts[2];
+                    if (parts.length == 2) {
+                        String requestType = parts[0];
+                        String trackerId = parts[1];
 
-                    // Renvoi de la position du tracker au client
-                    if ("GET-LAST".equals(requestType)) {
                         TrackerData trackerData = getLatestTrackerData(trackerId);
                         if (trackerData != null) {
                             String response = trackerData.toString();
                             sendResponse(response, clientAddress, clientPort, socket);
                         } else {
-                            // ID non trouvé, envoi d'un message d'erreur
+                            // ID not found, error message
                             String errorResponse = "Error : Tracker with ID '" + trackerId + "' not found.";
                             sendResponse(errorResponse, clientAddress, clientPort, socket);
                         }
-                    } else if ("GET-ALL".equals(requestType)) {
-                        // Renvoi de la liste des positions de tous les trackers au client
-                        StringBuilder response = new StringBuilder("Positions de tous les trackers:\n");
-                        for (Map.Entry<String, TreeMap<Long, TrackerData>> entry : trackerDataMap.entrySet()) {
-                            String currentTrackerId = entry.getKey();
-                            TrackerData latestTrackerData = entry.getValue().lastEntry().getValue();
-                            response.append(currentTrackerId).append(": ").append(latestTrackerData).append("\n");
-                        }
-                        sendResponse(response.toString(), clientAddress, clientPort, socket);
-                    } else if ("GET-IDS".equals(requestType)) {
-                        // Renvoi de la liste des ID stockés au client
-                        StringBuilder response = new StringBuilder("Liste des ID stockés:\n");
-                        for (String storedTrackerId : trackerDataMap.keySet()) {
-                            response.append(storedTrackerId).append("\n");
-                        }
-                        sendResponse(response.toString(), clientAddress, clientPort, socket);
+                    } else {
+                        String errorResponse = "Error : Invalid format";
+                        sendResponse(errorResponse, clientAddress, clientPort, socket);
                     }
+                } else if (message.startsWith("GET-HISTORY:")) {
+                    String[] parts = message.split(":");
+                    if (parts.length == 2) {
+                        String requestType = parts[0];
+                        String trackerId = parts[1];
+
+                        TrackerData trackerData = getLatestTrackerData(trackerId);
+                        if (trackerData != null) {
+                            String response = getTrackerHistory(trackerId);
+                            sendResponse(response, clientAddress, clientPort, socket);
+                        } else {
+                            // ID not found, error message
+                            String errorResponse = "Error : Tracker with ID '" + trackerId + "' not found.";
+                            sendResponse(errorResponse, clientAddress, clientPort, socket);
+                        }
+                    } else {
+                        String errorResponse = "Error : Invalid format";
+                        sendResponse(errorResponse, clientAddress, clientPort, socket);
+                    }
+                } else if (message.startsWith("GET-ALL:")) {
+                    StringBuilder response = new StringBuilder("ALL:\n");
+                    for (Map.Entry<String, TreeMap<Long, TrackerData>> entry : trackerDataMap.entrySet()) {
+                        String currentTrackerId = entry.getKey();
+                        TrackerData latestTrackerData = entry.getValue().lastEntry().getValue();
+                        response.append(currentTrackerId).append(": ").append(latestTrackerData).append("\n");
+                    }
+                    sendResponse(response.toString(), clientAddress, clientPort, socket);
+                } else if (message.startsWith("GET-IDS:")) {
+                    StringBuilder response = new StringBuilder("IDS:\n");
+                    for (String storedTrackerId : trackerDataMap.keySet()) {
+                        response.append(storedTrackerId).append("\n");
+                    }
+                    sendResponse(response.toString(), clientAddress, clientPort, socket);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-
-
-            System.out.println("Going to sleep for 10 seconds...");
-
+            //System.out.println("Going to sleep for 10 seconds...");
             // Sleep for a while to simulate a long-running task
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            System.out.println("End of sleep");
+            //try {
+            //    Thread.sleep(10000);
+            //} catch (InterruptedException e) {
+            //    e.printStackTrace();
+            //}
+            //System.out.println("End of sleep");
         }
     }
 
     private static TrackerData getLatestTrackerData(String trackerId) {
         TreeMap<Long, TrackerData> trackerDataByTimestamp = trackerDataMap.get(trackerId);
         return (trackerDataByTimestamp != null) ? trackerDataByTimestamp.lastEntry().getValue() : null;
+    }
+
+    private static String getTrackerHistory(String trackerId) {
+        TreeMap<Long, TrackerData> trackerDataByTimestamp = trackerDataMap.get(trackerId);
+
+        StringBuilder historyResponse = new StringBuilder("HISTORY:\n");
+
+        for (Map.Entry<Long, TrackerData> entry : trackerDataByTimestamp.entrySet()) {
+            TrackerData trackerData = entry.getValue();
+            historyResponse.append(trackerData.toString()).append("\n");
+        }
+
+        return historyResponse.toString();
     }
 
     private static void sendResponse(String response, InetAddress clientAddress, int clientPort, DatagramSocket socket) {

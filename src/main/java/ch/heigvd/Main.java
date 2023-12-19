@@ -1,11 +1,5 @@
 package ch.heigvd;
 
-import ch.heigvd.emitters.BroadcastEmitter;
-import ch.heigvd.emitters.MulticastEmitter;
-import ch.heigvd.emitters.UnicastEmitter;
-import ch.heigvd.receivers.BroadcastReceiver;
-import ch.heigvd.receivers.MulticastReceiver;
-import ch.heigvd.receivers.UnicastReceiver;
 import ch.heigvd.utils.ListNetworkInterfaces;
 import ch.heigvd.TrackerGPS;
 import ch.heigvd.Server;
@@ -18,12 +12,6 @@ import picocli.CommandLine.Command;
         description = "Practical content of the Java UDP programming chapter",
         version = "1.0.0",
         subcommands = {
-                BroadcastEmitter.class,
-                MulticastEmitter.class,
-                UnicastEmitter.class,
-                BroadcastReceiver.class,
-                UnicastReceiver.class,
-                MulticastReceiver.class,
                 ListNetworkInterfaces.class,
                 TrackerGPS.class,
                 Server.class,

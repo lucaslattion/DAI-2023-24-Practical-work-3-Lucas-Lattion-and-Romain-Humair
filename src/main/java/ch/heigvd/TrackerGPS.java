@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -61,8 +60,6 @@ public class TrackerGPS implements Callable<Integer> {
     )
     private long id;
 
-
-    protected SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
     @Override
     public Integer call() {
