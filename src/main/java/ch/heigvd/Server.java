@@ -9,6 +9,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import java.util.concurrent.ExecutorService;
@@ -124,30 +125,39 @@ public class Server extends AbstractServer {
 
         @Override
         public void run() {
-            String message = new String(
-                    packet.getData(),
-                    packet.getOffset(),
-                    packet.getLength(),
-                    StandardCharsets.UTF_8
-            );
+            try {
+                String message = new String(
+                        packet.getData(),
+                        packet.getOffset(),
+                        packet.getLength(),
+                        StandardCharsets.UTF_8
+                );
 
-            if (message.startsWith("PROVIDE:")) {
-                String[] parts = message.substring(8).split(":");
-                if (parts.length == 5) {
-                    String trackerId = parts[0];
-                    long timestamp = Long.parseLong(parts[1]);
-                    double latitude = Double.parseDouble(parts[2]);
-                    double longitude = Double.parseDouble(parts[3]);
-                    int batteryLevel = Integer.parseInt(parts[4]);
+                System.out.println("Multicast receiver (" + myself + ") received message: " + message);
 
-                    trackerDataMap.computeIfAbsent(trackerId, k -> new TreeMap<>())
-                            .put(timestamp, new TrackerData(trackerId, timestamp, latitude, longitude, batteryLevel));
+                if (message.startsWith("PROVIDE:")) {
+                    String[] parts = message.substring(8).split(",");
 
-                    System.out.println("Data received from tracker : " + trackerDataMap.get(trackerId).lastEntry().getValue());
+                    if (parts.length == 5) {
+
+                            String trackerId = parts[0];
+                            long timestamp = Long.parseLong(parts[1]);
+                            double latitude = Double.parseDouble(parts[2]);
+                            double longitude = Double.parseDouble(parts[3]);
+                            int batteryLevel = Integer.parseInt(parts[4]);
+                            
+                            trackerDataMap.computeIfAbsent(trackerId, k -> new TreeMap<>())
+                                    .put(timestamp, new TrackerData(trackerId, timestamp, latitude, longitude, batteryLevel));
+
+                            System.out.println("Data received from tracker : " + trackerDataMap.get(trackerId).lastEntry().getValue());
+                    }
                 }
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            System.out.println("Multicast receiver (" + myself + ") received message: " + message);
+
 
             //System.out.println("Going to sleep for 10 seconds...");
             // Sleep for a while to simulate a long-running task
@@ -208,53 +218,58 @@ public class Server extends AbstractServer {
 
         @Override
         public void run() {
+            try {
+                String message = new String(
+                        packet.getData(),
+                        packet.getOffset(),
+                        packet.getLength(),
+                        StandardCharsets.UTF_8
+                );
+                InetAddress clientAddress = packet.getAddress();
+                int clientPort = packet.getPort();
 
-            String message = new String(
-                    packet.getData(),
-                    packet.getOffset(),
-                    packet.getLength(),
-                    StandardCharsets.UTF_8
-            );
-            InetAddress clientAddress = packet.getAddress();
-            int clientPort = packet.getPort();
+                System.out.println("Unicast receiver (" + myself + ") received message: " + message);
 
-            if (message.startsWith("REQUEST:")) {
-                // Traitement de la demande du client
-                String[] parts = message.split(":");
-                String requestType = parts[1];
-                String trackerId = parts[2];
+                if (message.startsWith("REQUEST:")) {
+                    // Traitement de la demande du client
+                    String[] parts = message.split(":");
+                    String requestType = parts[1];
+                    String trackerId = parts[2];
 
-                // Renvoi de la position du tracker au client
-                if ("GET-LAST".equals(requestType)) {
-                    TrackerData trackerData = getLatestTrackerData(trackerId);
-                    if (trackerData != null) {
-                        String response = trackerData.toString();
-                        sendResponse(response, clientAddress, clientPort, socket);
-                    } else {
-                        // ID non trouvé, envoi d'un message d'erreur
-                        String errorResponse = "Error : Tracker with ID '" + trackerId + "' not found.";
-                        sendResponse(errorResponse, clientAddress, clientPort, socket);
+                    // Renvoi de la position du tracker au client
+                    if ("GET-LAST".equals(requestType)) {
+                        TrackerData trackerData = getLatestTrackerData(trackerId);
+                        if (trackerData != null) {
+                            String response = trackerData.toString();
+                            sendResponse(response, clientAddress, clientPort, socket);
+                        } else {
+                            // ID non trouvé, envoi d'un message d'erreur
+                            String errorResponse = "Error : Tracker with ID '" + trackerId + "' not found.";
+                            sendResponse(errorResponse, clientAddress, clientPort, socket);
+                        }
+                    } else if ("GET-ALL".equals(requestType)) {
+                        // Renvoi de la liste des positions de tous les trackers au client
+                        StringBuilder response = new StringBuilder("Positions de tous les trackers:\n");
+                        for (Map.Entry<String, TreeMap<Long, TrackerData>> entry : trackerDataMap.entrySet()) {
+                            String currentTrackerId = entry.getKey();
+                            TrackerData latestTrackerData = entry.getValue().lastEntry().getValue();
+                            response.append(currentTrackerId).append(": ").append(latestTrackerData).append("\n");
+                        }
+                        sendResponse(response.toString(), clientAddress, clientPort, socket);
+                    } else if ("GET-IDS".equals(requestType)) {
+                        // Renvoi de la liste des ID stockés au client
+                        StringBuilder response = new StringBuilder("Liste des ID stockés:\n");
+                        for (String storedTrackerId : trackerDataMap.keySet()) {
+                            response.append(storedTrackerId).append("\n");
+                        }
+                        sendResponse(response.toString(), clientAddress, clientPort, socket);
                     }
-                } else if ("GET-ALL".equals(requestType)) {
-                    // Renvoi de la liste des positions de tous les trackers au client
-                    StringBuilder response = new StringBuilder("Positions de tous les trackers:\n");
-                    for (Map.Entry<String, TreeMap<Long, TrackerData>> entry : trackerDataMap.entrySet()) {
-                        String currentTrackerId = entry.getKey();
-                        TrackerData latestTrackerData = entry.getValue().lastEntry().getValue();
-                        response.append(currentTrackerId).append(": ").append(latestTrackerData).append("\n");
-                    }
-                    sendResponse(response.toString(), clientAddress, clientPort, socket);
-                } else if ("GET-IDS".equals(requestType)) {
-                    // Renvoi de la liste des ID stockés au client
-                    StringBuilder response = new StringBuilder("Liste des ID stockés:\n");
-                    for (String storedTrackerId : trackerDataMap.keySet()) {
-                        response.append(storedTrackerId).append("\n");
-                    }
-                    sendResponse(response.toString(), clientAddress, clientPort, socket);
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            System.out.println("Multicast receiver (" + myself + ") received message: " + message);
+
 
             System.out.println("Going to sleep for 10 seconds...");
 

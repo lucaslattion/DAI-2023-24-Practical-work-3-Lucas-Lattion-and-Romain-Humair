@@ -8,6 +8,7 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -75,6 +76,7 @@ public class TrackerGPS implements Callable<Integer> {
             System.out.println("Tracker GPS Multicast emitter started (" + myself + ") with id " + id);
 
             InetAddress multicastAddress = InetAddress.getByName(host);
+            System.out.println("multicast address is " + multicastAddress);
             InetSocketAddress group = new InetSocketAddress(multicastAddress, parent.getPort());
             NetworkInterface networkInterface = NetworkInterface.getByName(interfaceName);
             socket.joinGroup(group, networkInterface);
@@ -87,9 +89,7 @@ public class TrackerGPS implements Callable<Integer> {
                     String batteryLevel = generateRandomBatteryLevel();
                     String timestamp = String.valueOf(System.currentTimeMillis());
 
-
-                    //String message = "Hello, from multicast emitter! (" + myself + " at " + timestamp + ")";
-                    String message = "PROVIDE:" + id + ":" + timestamp + ":" + position + ":" + batteryLevel;
+                    String message = "PROVIDE:" + id + "," + timestamp + "," + position + "," + batteryLevel;
 
                     System.out.println("Multicasting '" + message + "' to " + host + ":" + parent.getPort() + " on interface " + interfaceName);
 
@@ -100,6 +100,8 @@ public class TrackerGPS implements Callable<Integer> {
                             payload.length,
                             group
                     );
+
+                    System.out.println("Payload size : " + payload.length);
 
                     socket.send(datagram);
                 } catch (IOException e) {
@@ -138,12 +140,12 @@ public class TrackerGPS implements Callable<Integer> {
         Random rand = new Random();
         double latitude = 40.0 + (rand.nextDouble() * 20.0);
         double longitude = -120.0 + (rand.nextDouble() * 40.0);
-        return String.format("%.4f", latitude) + ":" + String.format("%.4f", longitude);
+        return String.format(Locale.ENGLISH, "%.4f", latitude) + "," + String.format(Locale.ENGLISH, "%.4f", longitude);
     }
 
     private static String generateRandomBatteryLevel() {
         Random rand = new Random();
         int batteryLevel = rand.nextInt(101); // Niveau de batterie entre 0% et 100%
-        return batteryLevel + "%";
+        return String.valueOf(batteryLevel);
     }
 }
