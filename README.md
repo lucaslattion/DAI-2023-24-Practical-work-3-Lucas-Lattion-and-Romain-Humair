@@ -125,7 +125,6 @@ Commands:
 
 powershell
 ```
-
 docker build -t dai-java-udp-tracker-gps .
 ```
 
@@ -150,6 +149,30 @@ docker push ghcr.io/lucaslattion/dai-java-udp-tracker-gps
 
 # Start the image with the ghcr.io/lucaslattion/dai-java-udp-tracker-gps tag
 docker run ghcr.io/lucaslattion/dai-java-udp-tracker-gps
+```
+
+### How to download the image
+
+powershell
+```
+docker pull ghcr.io/lucaslattion/dai-java-udp-tracker-gps
+```
+
+### How to start the docker services
+
+powershell
+```
+# Start all services from docker-compose
+docker-compose up
+
+# Start specific service from docker-compose
+docker-compose up <service-name>
+
+# Start a working environement
+docker-compose up -d tracker-gps-1
+docker-compose up -d tracker-gps-2
+docker-compose up -d server-1
+docker run -it ghcr.io/lucaslattion/dai-java-udp-tracker-gps client --host=server-1 --port=5051
 ```
 
 
@@ -301,9 +324,9 @@ sequenceDiagram
 
 In this diagram:
 - The **Client** initially sends a 'GET-LAST' request to the **Server** using UDP port 5051.
-- If the packet is lost, the client waits for 2 seconds (timeout) and then retries the request.
-- This retry mechanism occurs up to 5 times.
-- Upon successful receipt of the request, the Server responds with the requested data using UDP port 5052.
+- If the packet is lost, the client waits for 3 seconds (timeout) and then retries the request.
+- This retry mechanism occurs up to 1 time.
+- Upon successful receipt of the request, the Server responds with the requested data using UDP port 5051.
 
 This sequence effectively demonstrates how the system handles packet loss with a timeout and retry strategy, ensuring reliability in the data communication process.
 

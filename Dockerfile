@@ -12,3 +12,6 @@ ENTRYPOINT ["java", "-jar", "java-udp-programming-1.0-SNAPSHOT.jar"]
 
 # Set the default command
 CMD ["--help"]
+
+EXPOSE 5050
+EXPOSE 5051

@@ -1,7 +1,22 @@
+version: '3'
+
+networks:
+  mynetwork:
+    driver: bridge
 
 services:
 
   tracker-gps-1:
+    image: ghcr.io/lucaslattion/dai-java-udp-tracker-gps
+    command:
+      - tracker-gps
+      - --host=239.1.1.1
+      - --port=5050
+      - --delay=0
+      - --frequency=3000
+      - --interface=eth0
+
+  tracker-gps-2:
     image: ghcr.io/lucaslattion/dai-java-udp-tracker-gps
     command:
       - tracker-gps
@@ -20,13 +35,17 @@ services:
       - --interface=eth0
       - --port_multicast=5050
       - --port_unicast=5051
+    ports:
+      - "5050:5050"
+      - "5051:5051"
 
 
   client-1:
     image: ghcr.io/lucaslattion/dai-java-udp-tracker-gps
+    tty: true
     command:
       - client
-      - --host=localhost
+      - --host=server-1
       - --port=5051
 
   list-network-interfaces:
