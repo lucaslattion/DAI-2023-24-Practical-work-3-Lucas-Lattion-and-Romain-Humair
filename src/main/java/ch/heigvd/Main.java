@@ -25,8 +25,8 @@ public class Main {
 
     @CommandLine.Option(
             names = {"-p", "--port"},
-            description = "Port to use (default: 9876).",
-            defaultValue = "9876",
+            description = "Port to use (default: 5050).",
+            defaultValue = "5050",
             scope = CommandLine.ScopeType.INHERIT
     )
     protected int port;
